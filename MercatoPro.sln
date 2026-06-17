@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37314.3 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MercatoPro", "MercatoPro\MercatoPro.csproj", "{68988173-0E54-4720-9B34-7698BB073260}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminApp", "AdminApp\AdminApp.csproj", "{B6943448-8FFF-4ADA-8686-92E173265528}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68988173-0E54-4720-9B34-7698BB073260}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68988173-0E54-4720-9B34-7698BB073260}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68988173-0E54-4720-9B34-7698BB073260}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68988173-0E54-4720-9B34-7698BB073260}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6943448-8FFF-4ADA-8686-92E173265528}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6943448-8FFF-4ADA-8686-92E173265528}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6943448-8FFF-4ADA-8686-92E173265528}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6943448-8FFF-4ADA-8686-92E173265528}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1FC7F04B-03F7-43A2-BBCD-756B234325D9}
+	EndGlobalSection
+EndGlobal
