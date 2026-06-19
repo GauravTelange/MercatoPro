@@ -46,5 +46,35 @@ namespace MercatoPro.Controllers
 
             return View(user);
         }
+
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult Login(string email, string password)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == email && u.Password == password );
+
+            if( user != null)
+            {
+                HttpContext.Session.SetString("Username", user.FullName);
+                HttpContext.Session.SetString("UserRole", user.Role);
+                HttpContext.Session.SetInt32("UserId", user.UserId);
+                return RedirectToAction("Index", "Home");
+
+
+            }
+            ModelState.AddModelError("","Ivalid Email or Password");
+            return View();
+
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
+        }
     }
 }
