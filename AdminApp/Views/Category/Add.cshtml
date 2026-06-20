@@ -1,0 +1,29 @@
+﻿@model AdminApp.Models.Category;
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class = "row">
+    <div class = "md-6">
+        <form asp-action="Add" method="post">
+        
+            <div class="md-4">
+                <label asp-for="CategoryName"></label>
+                <input asp-for="CategoryName" class='form-control'/>
+                <span asp-validation-for="CategoryName" class="text-danger"></span>
+            </div>
+            </br></br>
+             <div class="md-4">
+                <label asp-for="Description"></label>
+                <input asp-for="Description" class='form-control'/>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            </br></br>
+            <div class="md-4">
+            <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+
+</div>

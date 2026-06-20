@@ -7,13 +7,13 @@ namespace AdminApp.Models
     {
 
         [Key]
-         public int ProductId { get; set; }
+        public int ProductId { get; set; }
     
         [Required]
         [StringLength(150)]
         public string ProductName { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
         public decimal Price { get; set; }
@@ -21,9 +21,9 @@ namespace AdminApp.Models
         public int StockQty { get; set; } = 0;
 
         public int CategoryId { get; set; }
-        public Category Category { get; set; }
+        public Category? Category { get; set; }
 
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
