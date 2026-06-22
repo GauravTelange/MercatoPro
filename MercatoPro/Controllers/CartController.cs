@@ -1,5 +1,6 @@
 ﻿using MercatoPro.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MercatoPro.Controllers
 {
@@ -10,6 +11,33 @@ namespace MercatoPro.Controllers
         public CartController(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        public IActionResult Index()
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null) {
+                return RedirectToAction("Login","Account");
+            }
+
+            var cartItems = _context.Carts.Include(c => c.Product).Where(c => c.UserId == userId.Value).ToList(); 
+
+            return View(cartItems);
+        }
+
+        [HttpPost]
+        public IActionResult Remove(int cartId)
+        {
+            var cartItem = _context.Carts.Find(cartId);
+
+            if (cartItem != null)
+            {
+                _context.Carts.Remove(cartItem);
+                _context.SaveChanges();
+
+            }
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
