@@ -36,3 +36,6 @@
     </tbody>
 </table>
 <h4>Total : ₹@Model.Sum( x => x.Product.Price * x.Quantity)</h4> 
+<form asp-controller="Order" asp-action="PlaceOrder" method="post">
+    <button type="submit" class="btn btn-primary">Place Order</button>
+</form>

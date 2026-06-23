@@ -49,15 +49,27 @@ namespace MercatoPro.Controllers
 
                 return RedirectToAction("Login", "Account");
             }
+            var existingitem = _context.Carts.FirstOrDefault(c=> c.UserId == userId && c.ProductId == productId);
 
-            var cartItem = new Cart
+            if (existingitem != null)
             {
-                UserId = userId.Value,
-                ProductId = productId,
-                Quantity = 1
-            };
+                existingitem.Quantity += 1;
+                _context.Carts.Update(existingitem);
+            }
+            else
+            {
+                var cartItem = new Cart
+                {
+                    UserId = userId.Value,
+                    ProductId = productId,
+                    Quantity = 1
+                };
 
-            _context.Carts.Add(cartItem);
+                _context.Carts.Add(cartItem);
+            }
+           
+
+           
             _context.SaveChanges();
 
 
