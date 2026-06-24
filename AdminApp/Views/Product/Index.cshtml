@@ -13,6 +13,7 @@
             <th>Price</th>
             <th>Stock</th>
             <th>Category</th>
+            <th>Action</th>
          </tr>
     </thead>
     <tbody>
@@ -24,6 +25,10 @@
                 <td>@product.Price</td>
                 <td>@product.StockQty</td>
                 <td>@product.Category.CategoryName</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@product.ProductId" class="btn btn-warning">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@product.ProductId" class="btn btn-danger">Delete</a>
+                </td>
             </tr>
         }
 

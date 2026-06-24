@@ -40,5 +40,48 @@ namespace AdminApp.Controllers
             ViewBag.Categories = _context.Categories.ToList();
             return View(product);
         }
+
+        public IActionResult Edit(int id )
+        {
+            var product = _context.Products.Find(id);
+
+            if (product == null) return NotFound();
+
+            ViewBag.Categories = _context.Categories.ToList();
+            return View(product);
+
+        }
+
+        [HttpPost]
+        public IActionResult Edit(Product product)
+        {
+            ModelState.Remove("Category");
+
+            if (ModelState.IsValid)
+            {
+                _context.Products.Update(product);
+                _context.SaveChanges();
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Categories = _context.Categories.ToList();
+            return View(product);
+        }
+
+        public IActionResult Delete(int id)
+        {
+            var product = _context.Products.Find(id);
+
+            if(product != null)
+            {
+                _context.Products.Remove(product);
+                _context.SaveChanges();
+               
+            }
+            return RedirectToAction("Index");
+        }
+
+
+
     }
 }
