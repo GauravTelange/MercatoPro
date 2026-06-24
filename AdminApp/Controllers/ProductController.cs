@@ -27,10 +27,30 @@ namespace AdminApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult Add(Product product)
+        public IActionResult Add(Product product, IFormFile imageFile)
         {
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+                string folderPath = Path.Combine("wwwroot", "images", "products");
 
-            // ModelState.Remove("Category");
+                if (!Directory.Exists(folderPath))
+                    Directory.CreateDirectory(folderPath);
+
+                string filePath = Path.Combine(folderPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    imageFile.CopyTo(stream);
+                }
+
+                product.ImageUrl = "/images/products/" + fileName;
+            }
+
+
+
+            ModelState.Remove("Category");
+           
             if (ModelState.IsValid)
             {
                 _context.Products.Add(product);
@@ -53,9 +73,29 @@ namespace AdminApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit(Product product)
+        public IActionResult Edit(Product product, IFormFile imageFile)
         {
             ModelState.Remove("Category");
+
+            
+
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+                string folderPath = Path.Combine("wwwroot", "images", "products");
+
+                if (!Directory.Exists(folderPath))
+                    Directory.CreateDirectory(folderPath);
+
+                string filePath = Path.Combine(folderPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    imageFile.CopyTo(stream);
+                }
+
+                product.ImageUrl = "/images/products/" + fileName;
+            }
 
             if (ModelState.IsValid)
             {

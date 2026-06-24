@@ -6,7 +6,7 @@
 }
 <div class="row">
     <div class="md-6">
-    <form asp-action="Add" method="post">
+    <form asp-action="Add" method="post"  enctype="multipart/form-data">
         <div class="md-4">
         <label asp-for="ProductName"></label>
         <input asp-for="ProductName" class="form-control"/>
@@ -43,6 +43,12 @@
 
         </select>
         </div>
+        </br></br>
+        <div class="md-4">
+            <label>Product Image</label>
+            <input type="file" name="imageFile" class="form-control" />
+        </div>
+        
         </br></br>
         <div class="md-4">
             <button type="submit" class="btn btn-primary">Submit</button>
