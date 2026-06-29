@@ -1,38 +1,32 @@
 using Microsoft.EntityFrameworkCore;
 using MercatoPro.Models;
 using Microsoft.Extensions.FileProviders;
+
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 builder.Services.AddControllersWithViews();
-
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
-
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
-
-
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseStaticFiles(new StaticFileOptions
+
+// Simple fix — images folder MercatoPro ke wwwroot mein hi rakhenge
+string imagesPath = Path.Combine(builder.Environment.WebRootPath, "images");
+if (!Directory.Exists(imagesPath))
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath).FullName, "AdminApp", "wwwroot", "images")),
-    RequestPath = "/images"
-});
+    Directory.CreateDirectory(imagesPath);
+}
+
 app.UseRouting();
 app.UseSession();
 app.UseAuthorization();

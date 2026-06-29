@@ -73,9 +73,10 @@ namespace AdminApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit(Product product, IFormFile imageFile)
+        public IActionResult Edit(Product product, IFormFile? imageFile)
         {
             ModelState.Remove("Category");
+            ModelState.Remove("ImageFile");
 
             
 

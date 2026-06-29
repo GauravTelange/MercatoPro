@@ -22,7 +22,8 @@ namespace MercatoPro.Controllers
 
         // POST: /Account/Register
         [HttpPost]
-        public IActionResult Register(User user) {
+        public IActionResult Register(User user)
+        {
 
             if (ModelState.IsValid)
             {
@@ -30,7 +31,7 @@ namespace MercatoPro.Controllers
 
                 if (existingUser != null)
                 {
-                    ModelState.AddModelError("Email","Email already registered");
+                    ModelState.AddModelError("Email", "Email already registered");
                     return View(user);
                 }
 
@@ -46,7 +47,6 @@ namespace MercatoPro.Controllers
 
             return View(user);
         }
-
         public IActionResult Login()
         {
             return View();
@@ -76,5 +76,22 @@ namespace MercatoPro.Controllers
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
+
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ForgotPassword(string email)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            if (user != null)
+                TempData["Message"] = "Password reset link sent to your email.";
+            else
+                TempData["Error"] = "Email not found!";
+            return View();
+        }
+
     }
 }

@@ -73,7 +73,7 @@ namespace MercatoPro.Controllers
             _context.SaveChanges();
 
 
-            return RedirectToAction("Index","Product");
+            return RedirectToAction("Index","Cart");
         }
     }
 }

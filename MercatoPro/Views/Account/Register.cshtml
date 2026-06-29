@@ -28,11 +28,24 @@
                   <input asp-for="Mobile" class="form-control" />
                   <span asp-validation-for="Mobile" class="text-danger"></span>
               </div>
+            
               <div class ="mb-3">
-                  <label asp-for="Password"></label>
-                  <input asp-for="Password" type="password" class="form-control" />
-                  <span asp-validation-for="Password" class="text-danger"></span>
+                <label asp-for="Password" class="form-label">Password</label>
+                <input asp-for="Password" type="password" class="form-control" id="passwordInput" />
+                
+                <span asp-validation-for="Password" class="text-danger"></span>
+
+                <div class="mt-2">
+                 <div id="strengthBar" style="height:6px; border-radius:4px; width:0%; transition: all 0.3s;"></div>
+                  <small id="strengthText" class="fw-semibold"></small>
               </div>
+            </div>
+            <div class ="mb-3">
+                <label asp-for="ConfirmPassword"></label>
+                <input asp-for="ConfirmPassword" type="password" class="form-control" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
               <div class ="mb-3">
                   <label asp-for="Sex"></label>
                   <select  asp-for = "Sex" class="form-control">
@@ -59,3 +72,45 @@
 
       </div>  
 </div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        const input = document.getElementById('passwordInput');
+        const bar = document.getElementById('strengthBar');
+        const text = document.getElementById('strengthText');
+
+        input.addEventListener('input', function () {
+            const val = input.value;
+            let score = 0;
+
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[a-z]/.test(val)) score++;
+            if (/\d/.test(val)) score++;
+            if (/[\W_]/.test(val)) score++; 
+
+            if (val.length === 0) {
+                bar.style.width = '0%';
+                bar.style.backgroundColor = '';
+                text.textContent = '';
+                text.style.color = '';
+            } else if (score <= 2) {
+                bar.style.width = '33%';
+                bar.style.backgroundColor = '#dc3545'; // red
+                text.textContent = '🔴 Weak';
+                text.style.color = '#dc3545';
+            } else if (score === 3) {
+                bar.style.width = '66%';
+                bar.style.backgroundColor = '#ffc107'; // yellow
+                text.textContent = '🟡 Medium';
+                text.style.color = '#ffc107';
+            } else {
+                bar.style.width = '100%';
+                bar.style.backgroundColor = '#198754'; // green
+                text.textContent = '🟢 Strong';
+                text.style.color = '#198754';
+            }
+        });
+    </script>
+}
