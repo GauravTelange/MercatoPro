@@ -18,6 +18,11 @@ namespace MercatoPro.Controllers
             return View("Index", "Product");
         }
 
+        public IActionResult About()
+        {
+            return View("About");        
+        
+        }
         public IActionResult Privacy()
         {
             return View();

@@ -81,17 +81,28 @@ namespace MercatoPro.Controllers
         {
             return View();
         }
-
         [HttpPost]
-        public IActionResult ForgotPassword(string email)
+        public IActionResult ForgotPassword(string email, string newPassword, string confirmPassword)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
-            if (user != null)
-                TempData["Message"] = "Password reset link sent to your email.";
-            else
-                TempData["Error"] = "Email not found!";
-            return View();
-        }
+            if (newPassword != confirmPassword)
+            {
+                TempData["Error"] = "Passwords do not match!";
+                return View();
+            }
 
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                TempData["Error"] = "Email not found!";
+                return View();
+            }
+
+            user.Password = newPassword;  // Plain text for now (matches existing login logic)
+            _context.SaveChanges();
+
+            TempData["Message"] = "Password reset successful! Please login with your new password.";
+            return RedirectToAction("Login");
+        }
     }
 }
