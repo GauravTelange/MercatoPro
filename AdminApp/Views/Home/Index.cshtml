@@ -2,7 +2,31 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex flex-column justify-content-center align-items-center text-center" style="height:80vh;">
+
+    <h1 class="display-1 fw-bold text-dark" style="letter-spacing:2px;">
+        Mercato<span class="text-warning">Pro</span>
+    </h1>
+
+    <p class="lead mt-3 text-secondary">
+        Smart Shopping. Faster Delivery. Better Prices.
+    </p>
+
+    <p class="text-muted w-50">
+        Welcome to <strong>MercatoPro</strong>, your trusted online marketplace for
+        groceries, electronics, fashion, home essentials, and much more.
+        Discover quality products, exclusive deals, and a seamless shopping
+        experience—all in one place.
+    </p>
+
+    <div class="mt-4">
+        <a href="/Product/Add" class="btn btn-warning btn-lg me-3 px-3">
+            Add Product
+        </a>
+
+        <a href="/Category/Add" class="btn btn-outline-dark btn-lg px-3">
+            Add Category
+        </a>
+    </div>
+
 </div>

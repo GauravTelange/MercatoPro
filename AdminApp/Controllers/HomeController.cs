@@ -18,7 +18,11 @@ namespace AdminApp.Controllers
             return View("Index","Product");
         }
 
-        public IActionResult Privacy()
+        public IActionResult Product()
+        {
+            return View();
+        }
+        public IActionResult Category()
         {
             return View();
         }

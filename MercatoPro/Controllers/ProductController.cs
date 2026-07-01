@@ -12,10 +12,18 @@ namespace MercatoPro.Controllers
         {
             _context = context;
         }
-        public IActionResult Index()
+        public IActionResult Index(int? categoryId)
         {
+            var categories = _context.Categories.ToList();
+            var products = categoryId == null
+                ? _context.Products.Include(p => p.Category).ToList()
+                : _context.Products.Include(p => p.Category)
+                                   .Where(p => p.CategoryId == categoryId)
+                                   .ToList();
 
-            var products = _context.Products.Include(p => p.Category).ToList();
+            ViewBag.Categories = categories;
+            ViewBag.SelectedCategory = categoryId;
+
             return View(products);
         }
     }

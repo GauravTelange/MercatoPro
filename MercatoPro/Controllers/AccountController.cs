@@ -51,6 +51,7 @@ namespace MercatoPro.Controllers
         {
             return View();
         }
+        
 
         [HttpPost]
         public IActionResult Login(string email, string password)
