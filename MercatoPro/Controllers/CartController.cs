@@ -1,47 +1,53 @@
 ﻿using MercatoPro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MercatoPro.Controllers
 {
     public class CartController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public CartController(ApplicationDbContext context)
+        public CartController(IHttpClientFactory httpClientFactory)
         {
-            _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
-        public IActionResult Index()
+        [HttpGet]
+        public  async Task<IActionResult> Index()
         {
-            int? userId = HttpContext.Session.GetInt32("UserId");
+            var  userId = HttpContext.Session.GetInt32("UserId");
 
-            if (userId == null) {
-                return RedirectToAction("Login","Account");
+            if (userId == null) 
+            { 
+                return RedirectToAction("Login", "Account");
             }
 
-            var cartItems = _context.Carts.Include(c => c.Product).Where(c => c.UserId == userId.Value).ToList(); 
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var response = await client.GetAsync($"api/Cart/{userId}");
+            var json = await response.Content.ReadAsStringAsync();
+            var cartItems = JsonSerializer.Deserialize<List<Cart>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             return View(cartItems);
+
+
+
         }
 
         [HttpPost]
-        public IActionResult Remove(int cartId)
+        public async Task<ActionResult> Remove(int cartId)
         {
-            var cartItem = _context.Carts.Find(cartId);
-
-            if (cartItem != null)
-            {
-                _context.Carts.Remove(cartItem);
-                _context.SaveChanges();
-
-            }
-            return RedirectToAction("Index");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+            var respone = await client.DeleteAsync($"api/Cart/{cartId}");
+            
+            return RedirectToAction("index");
         }
 
         [HttpPost]
-        public IActionResult AddToCart(int productId)
+        public async Task<IActionResult> AddToCart(int productId)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
 
@@ -49,31 +55,23 @@ namespace MercatoPro.Controllers
 
                 return RedirectToAction("Login", "Account");
             }
-            var existingitem = _context.Carts.FirstOrDefault(c=> c.UserId == userId && c.ProductId == productId);
+            
 
-            if (existingitem != null)
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var cartItem = new Cart
             {
-                existingitem.Quantity += 1;
-                _context.Carts.Update(existingitem);
-            }
-            else
-            {
-                var cartItem = new Cart
-                {
-                    UserId = userId.Value,
-                    ProductId = productId,
-                    Quantity = 1
-                };
+                UserId = userId.Value,
+                ProductId = productId,
+                Quantity = 1
+            };
 
-                _context.Carts.Add(cartItem);
-            }
-           
+            var json = JsonSerializer.Serialize(cartItem);
 
-           
-            _context.SaveChanges();
+            var response = await client.PostAsync("api/Cart", new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
 
 
-            return RedirectToAction("Index","Cart");
+            return RedirectToAction("Index");
         }
     }
 }

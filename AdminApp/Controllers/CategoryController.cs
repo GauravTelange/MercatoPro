@@ -1,21 +1,24 @@
 ﻿using AdminApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace AdminApp.Controllers
 {
     public class CategoryController : Controller
     {
-        public readonly ApplicationDbContext _context;
-
-        public CategoryController(ApplicationDbContext context)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public CategoryController(IHttpClientFactory httpClientFactory)
         {
-            _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         //List Category
-        public IActionResult Index()
+        [HttpGet]
+        public async Task<IActionResult> Index()
         {
-            var categories = _context.Categories.ToList();
+            var category = await _httpClientFactory.CreateClient("MercatoAPI").GetAsync("api/Categories");
+            var json = await category.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<Category>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return View(categories);
         }
 
@@ -27,52 +30,78 @@ namespace AdminApp.Controllers
 
         //Post Category 
         [HttpPost]
-        public IActionResult Add(Category category)
+        public async Task<IActionResult> Add(Category category)
         {
-            if (ModelState.IsValid) {
-                _context.Categories.Add(category);
-                _context.SaveChanges();
+            
+            if (!ModelState.IsValid)
+            {
+                return View(category);
+            }
+
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var json = JsonSerializer.Serialize(category);
+            
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await client.PostAsync("api/Categories", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
                 return RedirectToAction("Index");
             }
-            return View(category);
+            else
+            {
+                ModelState.AddModelError(string.Empty, "An error occurred while adding the category.");
+                return View(category);
+            }
         }
-        
-        public IActionResult Edit(int id)
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            var category = _context.Categories.Find(id);
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+            var response = await client.GetAsync($"api/Categories/{id}");
+            var json = await response.Content.ReadAsStringAsync();
+            var category = JsonSerializer.Deserialize<Category>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (category == null) return NotFound();
-
             return View(category);
         }
 
         [HttpPost]
-        public IActionResult Edit(Category category) {
-
-            if (ModelState.IsValid)
+        public async Task<IActionResult> Edit(Category category)
+        {
+            
+            if (!ModelState.IsValid)
             {
-                _context.Categories.Update(category);
+                return View(category);
+            }
+            
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
 
-                _context.SaveChanges();
 
+            var json = JsonSerializer.Serialize(category);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await client.PutAsync($"api/Categories/{category.CategoryId}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
                 return RedirectToAction("Index");
+            } else
+            {
+                ModelState.AddModelError(string.Empty, "An error occurred while updating the category.");
+                return View(category);
             }
-            return View(category);
-
         }
-
-        public IActionResult Delete(int id) {
-
-            var category = _context.Categories.Find(id);
-
-            if (category != null) {
-                _context.Categories.Remove(category);
-                _context.SaveChanges();
-            }
- 
+        public async Task<IActionResult> Delete(int id)
+        {
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+            
+            var response = await client.DeleteAsync($"api/Categories/{id}");
+            
             return RedirectToAction("Index");
-
-
         }
     }
 }

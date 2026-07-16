@@ -11,7 +11,10 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddHttpClient("MercatoAPI", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7128/");
+});
 var app = builder.Build();
 
 app.UseSession();
@@ -28,7 +31,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseSession();
 app.UseAuthorization();
 
 app.MapControllerRoute(

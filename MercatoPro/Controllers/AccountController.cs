@@ -1,16 +1,20 @@
 ﻿using MercatoPro.Models;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 
 namespace MercatoPro.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public AccountController(ApplicationDbContext context)
+        public AccountController(IHttpClientFactory httpClientFactory)
         {
-            _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         // GET: /Account/Register
@@ -22,29 +26,28 @@ namespace MercatoPro.Controllers
 
         // POST: /Account/Register
         [HttpPost]
-        public IActionResult Register(User user)
+        public async Task<IActionResult> Register(User user)
         {
-
             if (ModelState.IsValid)
             {
-                var existingUser = _context.Users.FirstOrDefault(u => u.Email == user.Email);
+                var client = _httpClientFactory.CreateClient("MercatoAPI");
+                user.Role = "Customer";
+                user.CreatedDate = DateTime.Now;
 
-                if (existingUser != null)
+                var json = JsonSerializer.Serialize(user);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await client.PostAsync("api/User/register", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Login");
+                }
+                else
                 {
                     ModelState.AddModelError("Email", "Email already registered");
                     return View(user);
                 }
-
-                user.Role = "Customer";
-
-                user.CreatedDate = DateTime.Now;
-
-                _context.Users.Add(user);
-                _context.SaveChanges();
-
-                return RedirectToAction("Login");
             }
-
             return View(user);
         }
         public IActionResult Login()
@@ -54,22 +57,37 @@ namespace MercatoPro.Controllers
         
 
         [HttpPost]
-        public IActionResult Login(string email, string password)
+        public async Task<IActionResult> Login(string email, string password)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == email && u.Password == password );
 
-            if( user != null)
+            var loginData = new LoginRequest { Email = email, Password = password };
+
+            string json = JsonSerializer.Serialize(loginData);
+
+            var content= new StringContent(json, Encoding.UTF8, "application/json");
+
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var response = await client.PostAsync("api/User/login", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                HttpContext.Session.SetString("Username", user.FullName);
+                var responseJson = await response.Content.ReadAsStringAsync();
+                var user = JsonSerializer.Deserialize<User>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                HttpContext.Session.SetString("UserName", user.FullName);
                 HttpContext.Session.SetString("UserRole", user.Role);
                 HttpContext.Session.SetInt32("UserId", user.UserId);
+
                 return RedirectToAction("Index", "Home");
-
-
             }
-            ModelState.AddModelError("","Ivalid Email or Password");
-            return View();
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View();
+            }
 
+            
         }
 
         public IActionResult Logout()
@@ -82,28 +100,49 @@ namespace MercatoPro.Controllers
         {
             return View();
         }
-        [HttpPost]
-        public IActionResult ForgotPassword(string email, string newPassword, string confirmPassword)
-        {
-            if (newPassword != confirmPassword)
+
+            [HttpPost]
+            public async Task<IActionResult> ForgotPassword(string email, string newPassword, string confirmPassword)
             {
-                TempData["Error"] = "Passwords do not match!";
-                return View();
+                if (newPassword != confirmPassword)
+                {
+                    TempData["Error"] = "Passwords do not match!";
+                    return View();
+                }
+
+                var res = new ResetPasswordDTO
+                {
+                    Email = email,
+                    NewPassword = newPassword
+                };
+
+                var json = JsonSerializer.Serialize(res);
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var client = _httpClientFactory.CreateClient("MercatoAPI");
+                var response = await client.PutAsync("api/User/resetpassword", content);
+
+
+                if(response.IsSuccessStatusCode)
+                {
+                    TempData["Success"] = "Password reset successful!";
+                    return RedirectToAction("Login");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    TempData["Error"] = errorMessage;
+                    return View();
+                }
             }
-
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
-
-            if (user == null)
-            {
-                TempData["Error"] = "Email not found!";
-                return View();
-            }
-
-            user.Password = newPassword;  // Plain text for now (matches existing login logic)
-            _context.SaveChanges();
-
-            TempData["Message"] = "Password reset successful! Please login with your new password.";
-            return RedirectToAction("Login");
-        }
     }
+
+    public class ResetPasswordDTO
+    {
+        public string Email { get; set; }
+        public string NewPassword { get; set; }
+    }
+
+    
 }

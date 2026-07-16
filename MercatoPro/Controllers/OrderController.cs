@@ -1,20 +1,21 @@
 ﻿using MercatoPro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
-namespace AdminApp.Controllers
+namespace MercatoPro.Controllers
 {
     public class OrderController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public OrderController(ApplicationDbContext context)
+        public OrderController(IHttpClientFactory httpClientFactory)
         {
-            _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpPost]
-        public IActionResult PlaceOrder()
+        public async Task<IActionResult> PlaceOrder()
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
 
@@ -23,50 +24,39 @@ namespace AdminApp.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var cartItems = _context.Carts.Include(c => c.Product).Where(c => c.UserId == userId.Value).ToList();
-
-            if (!cartItems.Any())
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+             
+            var response = await client.PostAsync($"api/Order/{userId}", null);
+            
+            if (response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Index", "Cart");
+                var json = await response.Content.ReadAsStringAsync();
+                var order = JsonSerializer.Deserialize<Order>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return RedirectToAction("Payment", new { orderId = order.OrderId });
             }
-
-            decimal Total = cartItems.Sum(c => c.Product.Price * c.Quantity);
-
-            var Order = new Order
+            else
             {
-                UserId = userId.Value,
-                TotalAmount = Total,
-                OrderStatus = "Pending",
-                OrderDate = DateTime.Now
-            };
-
-            _context.Orders.Add(Order);
-            _context.SaveChanges();
-
-            foreach (var item in cartItems)
-            {
-
-                var orderItem = new OrderItem
-                {
-                    OrderId = Order.OrderId,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    Price = item.Product.Price
-                };
-                _context.OrderItems.Add(orderItem);
+                return RedirectToAction("Index","Cart");
             }
-            _context.Carts.RemoveRange(cartItems);
-            _context.SaveChanges();
-
-            return RedirectToAction("Payment", new { orderId = Order.OrderId });
 
         }
 
-        public IActionResult Payment(int orderId)
+        [HttpGet]
+        public async Task<IActionResult> Payment(int orderId)
         {
-            var order = _context.Orders
-                .Include(o => o.OrderItems).ThenInclude(o => o.Product)
-                .FirstOrDefault(o => o.OrderId == orderId);
+            
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var res = await client.GetAsync($"api/Order/{orderId}");
+
+            var json = await res.Content.ReadAsStringAsync();
+
+            if (!res.IsSuccessStatusCode)
+            {
+                return Content($"API Error: {res.StatusCode} - {json}");
+            }
+
+            var order = JsonSerializer.Deserialize<Order>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             return View(order);
         }

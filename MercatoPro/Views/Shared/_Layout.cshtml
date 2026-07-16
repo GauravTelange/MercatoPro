@@ -19,35 +19,43 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                             <a class="nav-link" asp-controller="Product" asp-action="Index">Products</a>
-                                </li>
-                                     @if (Context.Session.GetString("UserName") != null)
-                                     {
-                                         <li class="nav-item">
-                                          <a class="nav-link" asp-controller="Cart" asp-action="Index">Cart</a>
-                                         </li>
-                                         <li class="nav-item">
-                                            <a class="nav-link" asp-controller="Account" asp-action="Logout">Logout</a>
-                                         </li>
-                                     }
-                                     else
-                                    {
-                                        <li class="nav-item">
-                                            <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" asp-controller="Account" asp-action="Register">Register</a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" asp-controller="Cart" asp-action="Index">Cart</a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" asp-controller="Account" asp-action="Logout">Logout</a>
-                                        </li>
-                                    }
+
+                        @if (Context.Session.GetString("UserName") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link fw-bold text-success">
+                                    👋 @Context.Session.GetString("UserName")
+                                </span>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Product" asp-action="Index">Products</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Cart" asp-action="Index">🛒 Cart</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Logout">Logout</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Product" asp-action="Index">Products</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Register">Register</a>
+                            </li>
+                        }
                     </ul>
-                </div>
+            </div>
             </div>
         </nav>
     </header>

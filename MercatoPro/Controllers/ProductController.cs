@@ -1,30 +1,45 @@
 ﻿using MercatoPro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MercatoPro.Controllers
 {
     public class ProductController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ProductController(ApplicationDbContext context)
+
+        public ProductController(IHttpClientFactory context)
         {
-            _context = context;
+            _httpClientFactory = context;
         }
-        public IActionResult Index(int? categoryId)
+        public  async Task<IActionResult> Index(int? categoryId)
         {
-            var categories = _context.Categories.ToList();
-            var products = categoryId == null
-                ? _context.Products.Include(p => p.Category).ToList()
-                : _context.Products.Include(p => p.Category)
-                                   .Where(p => p.CategoryId == categoryId)
-                                   .ToList();
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
 
+
+            var response = await client.GetAsync("api/Products");
+            var json = await response.Content.ReadAsStringAsync();
+            var products = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); 
+                
+
+            var res = await client.GetAsync("api/Categories");
+            var jsonCat = await res.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<Category>>(jsonCat, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            
             ViewBag.Categories = categories;
             ViewBag.SelectedCategory = categoryId;
 
+            if (categoryId.HasValue)
+            {
+                products = products.Where(p => p.CategoryId == categoryId.Value).ToList();
+            }
+
             return View(products);
+        
+
+
         }
     }
 }

@@ -25,7 +25,7 @@
               </div>
               <div class ="mb-3">
                   <label asp-for="Mobile"></label>
-                  <input asp-for="Mobile" class="form-control" />
+                  <input asp-for="Mobile"  type="tel" class="form-control" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g,'')" />
                   <span asp-validation-for="Mobile" class="text-danger"></span>
               </div>
             

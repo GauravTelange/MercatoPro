@@ -1,33 +1,51 @@
 ﻿using AdminApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text.Json;
 namespace AdminApp.Controllers
 {
     public class ProductController : Controller
     {
 
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ProductController(ApplicationDbContext context)
+        public ProductController(IHttpClientFactory httpClientFactory)
         {
-           _context = context;
+           _httpClientFactory = httpClientFactory;
         }
 
-        public IActionResult Index()
+        [HttpGet]
+        public async Task<IActionResult> Index()
         {
-            var products = _context.Products.Include(p => p.Category).ToList();
-            return View(products);
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var response = await client.GetAsync("api/Products");   
+            
+            var json = await response.Content.ReadAsStringAsync();
+
+            var product = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            return View(product);
+
+
         }
 
-        public IActionResult Add()
+        [HttpGet]
+        public async Task<IActionResult> Add()
         {
-            ViewBag.Categories = _context.Categories.ToList();
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+
+            var response = await client.GetAsync("api/Categories");
+            var json = await response.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<Category>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            ViewBag.Categories = categories;
+
             return View();
         }
 
         [HttpPost]
-        public IActionResult Add(Product product, IFormFile imageFile)
+        public async Task<IActionResult> Add(Product product, IFormFile imageFile)
         {
             if (imageFile != null && imageFile.Length > 0)
             {
@@ -50,30 +68,58 @@ namespace AdminApp.Controllers
 
 
             ModelState.Remove("Category");
-           
+
             if (ModelState.IsValid)
             {
-                _context.Products.Add(product);
-                _context.SaveChanges();
-                return RedirectToAction("Index");
+                var client = _httpClientFactory.CreateClient("MercatoAPI");
+                var json = JsonSerializer.Serialize(product);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await client.PostAsync("api/Products", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "An error occurred while adding the product.");
+
+                }
             }
-            ViewBag.Categories = _context.Categories.ToList();
-            return View(product);
+                var catClient = _httpClientFactory.CreateClient("MercatoAPI");
+                var catResponse = await catClient.GetAsync("api/Categories");
+                var catJson = await catResponse.Content.ReadAsStringAsync();
+                var categories = JsonSerializer.Deserialize<List<Category>>(catJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                ViewBag.Categories = categories;
+                return View(product);
+
+            
         }
 
-        public IActionResult Edit(int id )
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id )
         {
-            var product = _context.Products.Find(id);
+            var product = await _httpClientFactory.CreateClient("MercatoAPI").GetAsync($"api/Products/{id}");
+            if (!product.IsSuccessStatusCode)
+            {
+                return NotFound();
+            }
 
-            if (product == null) return NotFound();
+            var json = await product.Content.ReadAsStringAsync();
+            var productData = JsonSerializer.Deserialize<Product>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            ViewBag.Categories = _context.Categories.ToList();
-            return View(product);
+            var categoriesResponse = await _httpClientFactory.CreateClient("MercatoAPI").GetAsync("api/Categories");
+            var categoriesJson = await categoriesResponse.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<Category>>(categoriesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            ViewBag.Categories = categories;
+
+            return View(productData);
 
         }
 
         [HttpPost]
-        public IActionResult Edit(Product product, IFormFile? imageFile)
+        public async Task<IActionResult> Edit(Product product, IFormFile? imageFile)
         {
             ModelState.Remove("Category");
             ModelState.Remove("ImageFile");
@@ -100,25 +146,34 @@ namespace AdminApp.Controllers
 
             if (ModelState.IsValid)
             {
-                _context.Products.Update(product);
-                _context.SaveChanges();
-                return RedirectToAction("Index");
+                var client = _httpClientFactory.CreateClient("MercatoAPI");
+                var json = JsonSerializer.Serialize(product);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await client.PutAsync($"api/Products/{product.ProductId}", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "An error occurred while updating the product.");
+                }
             }
+            var catClient = _httpClientFactory.CreateClient("MercatoAPI");
+            var catResponse = await catClient.GetAsync("api/Categories");
+            var catJson = await catResponse.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<Category>>(catJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            ViewBag.Categories = categories;
 
-            ViewBag.Categories = _context.Categories.ToList();
-            return View(product);
+            return  View(product);
         }
 
-        public IActionResult Delete(int id)
+        
+        public async Task<IActionResult> Delete(int id)
         {
-            var product = _context.Products.Find(id);
-
-            if(product != null)
-            {
-                _context.Products.Remove(product);
-                _context.SaveChanges();
-               
-            }
+            var client = _httpClientFactory.CreateClient("MercatoAPI");
+            await client.DeleteAsync($"api/Products/{id}");
+            
             return RedirectToAction("Index");
         }
 

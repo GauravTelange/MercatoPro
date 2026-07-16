@@ -15,7 +15,7 @@ namespace MercatoPro.Controllers
 
         public IActionResult Index()
         {
-            return View("Index", "Product");
+            return View();
         }
 
         public IActionResult About()
