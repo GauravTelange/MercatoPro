@@ -1,17 +1,21 @@
 ﻿using AdminApp.Models;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+
 namespace AdminApp.Controllers
 {
     public class ProductController : Controller
     {
-
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly Cloudinary _cloudinary;
 
-        public ProductController(IHttpClientFactory httpClientFactory)
+        public ProductController(IHttpClientFactory httpClientFactory, Cloudinary cloudinary)
         {
-           _httpClientFactory = httpClientFactory;
+            _httpClientFactory = httpClientFactory;
+            _cloudinary = cloudinary;
         }
 
         [HttpGet]
@@ -19,15 +23,13 @@ namespace AdminApp.Controllers
         {
             var client = _httpClientFactory.CreateClient("MercatoAPI");
 
-            var response = await client.GetAsync("api/Products");   
-            
+            var response = await client.GetAsync("api/Products");
+
             var json = await response.Content.ReadAsStringAsync();
 
             var product = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             return View(product);
-
-
         }
 
         [HttpGet]
@@ -49,23 +51,24 @@ namespace AdminApp.Controllers
         {
             if (imageFile != null && imageFile.Length > 0)
             {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
-                string folderPath = Path.Combine("wwwroot", "images", "products");
-
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
-
-                string filePath = Path.Combine(folderPath, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using var stream = imageFile.OpenReadStream();
+                var uploadParams = new ImageUploadParams
                 {
-                    imageFile.CopyTo(stream);
+                    File = new FileDescription(imageFile.FileName, stream),
+                    Folder = "mercato-products"
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                {
+                    ModelState.AddModelError(string.Empty, "Image upload failed: " + uploadResult.Error.Message);
                 }
-
-                product.ImageUrl = "/images/products/" + fileName;
+                else
+                {
+                    product.ImageUrl = uploadResult.SecureUrl.ToString();
+                }
             }
-
-
 
             ModelState.Remove("Category");
 
@@ -78,26 +81,22 @@ namespace AdminApp.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
-
                 }
                 else
                 {
                     ModelState.AddModelError(string.Empty, "An error occurred while adding the product.");
-
                 }
             }
-                var catClient = _httpClientFactory.CreateClient("MercatoAPI");
-                var catResponse = await catClient.GetAsync("api/Categories");
-                var catJson = await catResponse.Content.ReadAsStringAsync();
-                var categories = JsonSerializer.Deserialize<List<Category>>(catJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                ViewBag.Categories = categories;
-                return View(product);
-
-            
+            var catClient = _httpClientFactory.CreateClient("MercatoAPI");
+            var catResponse = await catClient.GetAsync("api/Categories");
+            var catJson = await catResponse.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<Category>>(catJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            ViewBag.Categories = categories;
+            return View(product);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(int id )
+        public async Task<IActionResult> Edit(int id)
         {
             var product = await _httpClientFactory.CreateClient("MercatoAPI").GetAsync($"api/Products/{id}");
             if (!product.IsSuccessStatusCode)
@@ -115,7 +114,6 @@ namespace AdminApp.Controllers
             ViewBag.Categories = categories;
 
             return View(productData);
-
         }
 
         [HttpPost]
@@ -124,24 +122,25 @@ namespace AdminApp.Controllers
             ModelState.Remove("Category");
             ModelState.Remove("ImageFile");
 
-            
-
             if (imageFile != null && imageFile.Length > 0)
             {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
-                string folderPath = Path.Combine("wwwroot", "images", "products");
-
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
-
-                string filePath = Path.Combine(folderPath, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using var stream = imageFile.OpenReadStream();
+                var uploadParams = new ImageUploadParams
                 {
-                    imageFile.CopyTo(stream);
-                }
+                    File = new FileDescription(imageFile.FileName, stream),
+                    Folder = "mercato-products"
+                };
 
-                product.ImageUrl = "/images/products/" + fileName;
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                {
+                    ModelState.AddModelError(string.Empty, "Image upload failed: " + uploadResult.Error.Message);
+                }
+                else
+                {
+                    product.ImageUrl = uploadResult.SecureUrl.ToString();
+                }
             }
 
             if (ModelState.IsValid)
@@ -165,19 +164,15 @@ namespace AdminApp.Controllers
             var categories = JsonSerializer.Deserialize<List<Category>>(catJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             ViewBag.Categories = categories;
 
-            return  View(product);
+            return View(product);
         }
 
-        
         public async Task<IActionResult> Delete(int id)
         {
             var client = _httpClientFactory.CreateClient("MercatoAPI");
             await client.DeleteAsync($"api/Products/{id}");
-            
+
             return RedirectToAction("Index");
         }
-
-
-
     }
 }

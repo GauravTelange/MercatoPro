@@ -5,6 +5,8 @@ obj/
 *.user
 *.suo
 
+AdminApp/appsettings.json
+
 # Build results
 [Dd]ebug/
 [Rr]elease/
